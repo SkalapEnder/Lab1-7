@@ -28,14 +28,5 @@ app.get('/', (req, res) => res.render('index'))
 app.use('/', authRouter);
 app.use('/', taskRouter);
 
-// Footer route for consistent footer across pages
-app.use((req, res, next) => {
-    res.locals.footer = {
-        name: 'Your Name',
-        groupNumber: 'Group Number',
-    };
-    next();
-});
-
 
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
