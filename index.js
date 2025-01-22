@@ -9,7 +9,7 @@ const app = express();
 const PORT = 3000;
 
 // MongoDB Atlas connection
-mongoose.connect('mongodb+srv://skalap2endra:kGOM7z5V54vBFdp1@cluster0.vannl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0');
+mongoose.connect('mongodb+srv://skalap2endra:kGOM7z5V54vBFdp1@cluster0.vannl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0').then(() => console.log("MongoDB Connected!"));
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
