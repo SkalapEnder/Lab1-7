@@ -1,39 +1,56 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const mongoose = require("mongoose");
 const router = express.Router();
+const adminCode = 'admin1243'
 
-// Route to display the registration form
-router.get('/register', (req, res) => {
-    res.render('registration');
-});
+mongoose.connect('mongodb+srv://skalap2endra:kGOM7z5V54vBFdp1@cluster0.vannl.mongodb.net/lab1_7?retryWrites=true&w=majority&appName=Cluster0')
+    .then(() => console.log('Auth: Connected to MongoDB Atlas'))
+    .catch((err) => console.error('Error connecting to MongoDB Atlas:', err));
 
-// Route to handle user registration
+// REGISTER
+router.get('/register', (req, res) => res.render('registration', {role: 'user'}));
+
 router.post('/register', async (req, res) => {
-    const { user_name, email, password, birthdate, gender } = req.body;
+    const { username, email, password, role, secretCode } = req.body;
 
-    // Check if the user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-        return res.send('User already exists!');
+    const existingUser = await User.findOne({ username: username });
+    if (existingUser !== null) {
+        return res.render('error', { errorMessage: 'User already exists' });
     }
 
-    // Create a new user
+    if (role === 'admin' && secretCode !== adminCode) {
+        console.log(secretCode);
+        return res.render('error', { errorMessage: 'Invalid secret code' });
+    }
+
+    const userId = await getNextFreeUserId();
+    if (isNaN(userId)) {
+        throw new Error('Failed to generate a valid user_id');
+    }
+
+    // const hashedPassword = await bcrypt.hash(password, 11);
+
     const newUser = new User({
-        user_name,
-        email,
-        password,
-        birthdate,
-        gender,
+        user_id: userId,
+        username: username,
+        email: email,
+        password: password,
+        role: role,
+        created_at: new Date(),
+        updated_at: new Date(),
     });
 
-    // Hash the password before saving
     await newUser.save();
     res.redirect('/login');
 });
 
-// Route to display the login form
+// LOGIN
 router.get('/login', (req, res) => {
+    if (req.session.userId) {
+        return res.redirect('/todo');
+    }
     res.render('login');
 });
 
@@ -42,22 +59,36 @@ router.post('/login', async (req, res) => {
     const { user_name, password } = req.body;
     const user = await User.findOne({ user_name });
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (user === null || password !== user.password) {
         return res.send('Invalid login credentials');
     }
 
-    req.session.userId = user._id; // Store user session
-    res.redirect('/index'); // Redirect to the main page after login
+    req.session.userId = user.user_id;
+    res.redirect('todo');
 });
 
 // Route to handle logout
 router.get('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
-            return res.send('Error logging out');
+            res.render('error', {errorMessage: 'Error logging out'});
         }
-        res.redirect('/login');
+        res.redirect('/');
     });
 });
+
+async function getNextFreeUserId() {
+    try {
+        const lastUser = await User.findOne().sort({ user_id: -1 });
+        if (lastUser === null) {
+            return 0;
+        }
+        return parseInt(lastUser.user_id + 1);
+    } catch (err) {
+        console.error('Error retrieving next free user_id:', err.message);
+        throw new Error('Failed to retrieve next free user ID');
+    }
+}
+
 
 module.exports = router;
