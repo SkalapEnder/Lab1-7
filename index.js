@@ -26,6 +26,11 @@ app.use(session({
     cookie: { maxAge: 1000 * 60 * 60 }
 }));
 
+app.use((req, res, next) => {
+    res.locals.isLoggedIn = req.session.isLoggedIn || false; // Pass login status to templates
+    next();
+});
+
 app.get('/', (req, res) => res.render('index'))
 
 // Routes

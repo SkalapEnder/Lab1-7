@@ -21,7 +21,6 @@ router.post('/register', async (req, res) => {
     }
 
     if (role === 'admin' && secretCode !== adminCode) {
-        console.log(secretCode);
         return res.render('error', { errorMessage: 'Invalid secret code' });
     }
 
@@ -48,7 +47,7 @@ router.post('/register', async (req, res) => {
 
 // LOGIN
 router.get('/login', (req, res) => {
-    if (req.session.userId) {
+    if (req.session.userId !== undefined) {
         return res.redirect('/todo');
     }
     res.render('login');
@@ -56,14 +55,15 @@ router.get('/login', (req, res) => {
 
 // Route to handle user login
 router.post('/login', async (req, res) => {
-    const { user_name, password } = req.body;
-    const user = await User.findOne({ user_name });
+    const { username, password } = req.body;
+    const user = await User.findOne({ username: username });
 
     if (user === null || password !== user.password) {
         return res.send('Invalid login credentials');
     }
 
     req.session.userId = user.user_id;
+    req.session.isLoggedIn = true;
     res.redirect('todo');
 });
 
