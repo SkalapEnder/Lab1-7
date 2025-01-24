@@ -32,8 +32,8 @@ router.post('/todo', async (req, res) => {
         title: title,
         description: description,
         is_done: false,
-        created_at: Date.now(),
-        updated_at: Date.now(),
+        created_at: new Date(),
+        updated_at: new Date(),
     };
 
     const result = await collection.insertOne(newTask);
@@ -47,7 +47,6 @@ router.put('/todo/put/:id', async (req, res) => {
     if (req.session.userId === undefined) {
         return res.redirect('/login');
     }
-    console.log('HIIII!')
     const taskId = new ObjectId(req.params.id);
     const title = req.body.title;
     const description = req.body.description;
@@ -95,7 +94,6 @@ router.delete('/todo/delete/:id', async (req, res) => {
 
     try {
         const result = await collection.deleteOne({ _id: id });
-        console.log("HI!");
         if (result.deletedCount === 0) {
             return res.status(402).send('No task was deleted');
         }
